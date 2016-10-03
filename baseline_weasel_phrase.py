@@ -29,12 +29,24 @@ def isEmptyLine(line):
         return False
 
 
+# def getHedge(f, hedge):
+#     for line in f:    
+#         if not isEmptyLine(line):
+#             word, pos, cue = line.strip().lower().split('\t')
+#             if isCue(cue):
+#                 hedge.add((word,pos))
+
+
 def getHedge(f, hedge):
+    consecutive = False
     for line in f:    
         if not isEmptyLine(line):
             word, pos, cue = line.strip().lower().split('\t')
-            if isCue(cue):
+            if isCue(cue) and not consecutive:
                 hedge.add((word,pos))
+                consecutive = True
+            elif not isCue(cue):
+                consecutive = False
 
 
 def trainHedge(path):
