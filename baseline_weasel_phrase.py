@@ -97,12 +97,14 @@ def phraseDetection(f, hedge, w, count):
                 if not consecutive:
                     span.append(count)
                     consecutive = True
+                else:
+                    span.append(count)
             else:
                 if consecutive:
-                    if len(span) == 1:
-                        w.write('%s ' %(span[0]))
-                    else:
+                    if len(span) > 1:
                         w.write('%s-%s ' %(span[0],span[-1]))
+                    else:
+                        w.write('%s ' %(span[0]))
                     consecutive = False   
                     span = []
     return count
