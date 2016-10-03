@@ -11,7 +11,7 @@ def getCurrentPath():
 
 
 def getTrainFiles(path):
-    subpath = path + '\\train'
+    subpath = path + '/train'
     files = os.listdir(subpath)
     return files, subpath
 
@@ -53,7 +53,7 @@ def trainHedge(path):
     hedge = set()
     files, subpath = getTrainFiles(path)
     for doc in files:
-        filepath = subpath + "\\" + doc
+        filepath = subpath + "/" + doc
         f = open(filepath, 'r')
         getHedge(f, hedge)
 
@@ -62,7 +62,7 @@ def trainHedge(path):
 
 def getTestFiles(path, folder_type):
     "Param folder_type: 'private' or 'public'"
-    subpath = path + '\\test-' + folder_type
+    subpath = path + '/test-' + folder_type
     files = os.listdir(subpath)
     return files, subpath
 
@@ -78,7 +78,7 @@ def writeToSubmission(path, hedge, submission, folder_type):
     w.write('CUE-'+ folder_type +',')
     count = 0
     for doc in files:
-        filepath = subpath + "\\" + doc
+        filepath = subpath + "/" + doc
         f = open(filepath, 'r')
         count = phraseDetection(f, hedge, w, count)
 
