@@ -1,10 +1,13 @@
+import datetime
 
 # seenCues = []
+
+threshold = 0.075
 
 freqs = {}
 curFreqs = {}
 
-for fileNum in range(1, 1187):#87):
+for fileNum in range(1, 1187):
 	seenCues = []
 	# print curFreqs
 	strNum = '%04d' % fileNum
@@ -15,15 +18,16 @@ for fileNum in range(1, 1187):#87):
 
 	for line in file:
 		lineData = line.split("\t")
-		word = lineData[0].lower()
-		if(len(lineData) >= 2 and lineData[2] != "_" and (not lineData[2] in seenCues)):
-			seenCues.append(lineData[2])
-			if(word not in curFreqs.keys()):
-				curFreqs[word] = 0
-			curFreqs[word] += 1
-		if(word not in freqs.keys()):
-			freqs[word] = 0
-		freqs[word] += 1
+		if(len(lineData) > 1):
+			word = (lineData[0].lower(), lineData[1])
+			if(len(lineData) >= 2 and lineData[2] != "_" and (not lineData[2] in seenCues)):
+				seenCues.append(lineData[2])
+				if(word not in curFreqs.keys()):
+					curFreqs[word] = 0
+				curFreqs[word] += 1
+			if(word not in freqs.keys()):
+				freqs[word] = 0
+			freqs[word] += 1
 
 probabilities = {}
 for word in freqs:
@@ -33,11 +37,50 @@ for word in freqs:
 		ambiFreq = curFreqs[word]
 	probabilities[word] = ambiFreq * 1.0 / freq * 1.0
 
-# for word in probabilities:
-# 	if(probabilities[word] != 0):
-# 		print word, probabilities[word]
+for word in probabilities:
+	if(probabilities[word] != 0):
+		print word, probabilities[word]
 
+# quit()
+
+outTime = datetime.datetime.now().strftime("%m-%d_%H:%M")
+# outFileName = "s" + outTime + ".csv"
+
+outFileName = "out.csv"
+outfile = open(outFileName, "w")
 count = 0
+
+outString = ""
+
+print >>outfile, "Type,Indices"
+
+for fileNum in range(501, 1001):
+	strNum = '%04d' % fileNum
+	fileName = "doc_" + strNum + ".txt"
+	if (fileNum % 100 == 0):
+		print fileName
+	file = open("test-public/" + fileName).read().split("\n\n")[:-1]
+
+	for sentence in file:
+		constructedSent = ""
+		# print "SENT: " + sentence
+		lines = sentence.split("\n")
+		maxProb = 0
+		for line in lines:
+			word = line.split("\t")[0]
+			constructedSent += word + " "
+			word = (word, line.split("\t")[1])
+			if (word in probabilities.keys()):
+				maxProb = max(maxProb, probabilities[word])
+		# print fileNum, count, maxProb
+		if(maxProb > threshold):
+			outString += str(count) + " "
+			# print constructedSent
+		count += 1
+
+
+print >>outfile, "SENTENCE-public," + outString
+
 
 outString = ""
 
@@ -56,13 +99,18 @@ for fileNum in range(1, 501):
 		for line in lines:
 			word = line.split("\t")[0]
 			constructedSent += word + " "
+			word = (word, line.split("\t")[1])
 			if (word in probabilities.keys()):
 				maxProb = max(maxProb, probabilities[word])
 		# print fileNum, count, maxProb
-		if(maxProb > 0.3):
+		if(maxProb > threshold):
 			outString += str(count) + " "
 			# print constructedSent
 		count += 1
 
 
-print "OUTSTRING: " + outString
+print >>outfile, "SENTENCE-private," + outString
+print "CDE"
+
+outfile.close()
+print "CLOSED!"
