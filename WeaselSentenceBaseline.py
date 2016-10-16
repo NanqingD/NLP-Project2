@@ -7,14 +7,14 @@ threshold = 0.075
 freqs = {}
 curFreqs = {}
 
-for fileNum in range(1, 1187):
+for fileNum in range(1, 950):
 	seenCues = []
 	# print curFreqs
 	strNum = '%04d' % fileNum
 	fileName = "doc_" + strNum + ".txt"
 	if (fileNum % 100 == 0):
 		print fileName
-	file = open("train/" + fileName).read().split("\n")
+	file = open("cross_training/" + fileName).read().split("\n")
 
 	for line in file:
 		lineData = line.split("\t")
@@ -46,20 +46,20 @@ for word in probabilities:
 outTime = datetime.datetime.now().strftime("%m-%d_%H:%M")
 # outFileName = "s" + outTime + ".csv"
 
-outFileName = "out.csv"
+outFileName = "crossData.csv"
 outfile = open(outFileName, "w")
 count = 0
 
 outString = ""
 
-print >>outfile, "Type,Indices"
+# print >>outfile, "Type,Indices"
 
-for fileNum in range(501, 1001):
+for fileNum in range(951, 1187):
 	strNum = '%04d' % fileNum
 	fileName = "doc_" + strNum + ".txt"
 	if (fileNum % 100 == 0):
 		print fileName
-	file = open("test-public/" + fileName).read().split("\n\n")[:-1]
+	file = open("cross_validation/" + fileName).read().split("\n\n")[:-1]
 
 	for sentence in file:
 		constructedSent = ""
@@ -74,13 +74,16 @@ for fileNum in range(501, 1001):
 				maxProb = max(maxProb, probabilities[word])
 		# print fileNum, count, maxProb
 		if(maxProb > threshold):
+			print >>outfile, count
 			outString += str(count) + " "
 			# print constructedSent
 		count += 1
 
 
-print >>outfile, "SENTENCE-public," + outString
+print >>outfile, "CROSSVALIDATION," + outString
 
+
+quit()
 
 outString = ""
 
