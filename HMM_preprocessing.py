@@ -1,6 +1,7 @@
 import os
 from collections import defaultdict
 from itertools import *
+from hmm import viterbi
 
 
 word_pos_BIO_count = {}
@@ -15,9 +16,12 @@ def preprocessFile(ngram):
 	w = relabelFile(f)
 	calculateCount()
 	smoothed_word_pos_BIO_Count = goodTuring(word_pos_BIO_count)
-	calculateEmissionProbability(smoothed_word_pos_BIO_Count)
-	calculateInitialState(smoothed_word_pos_BIO_Count)
-	calculateTransitionProbability(ngram)
+	emissions = calculateEmissionProbability(smoothed_word_pos_BIO_Count)
+	states = calculateInitialState(smoothed_word_pos_BIO_Count)
+	transitions = calculateTransitionProbability(ngram)
+	observations = ['test']
+	start_prob = [0.5]
+	print viterbi(observations, states, start_prob, transitions, emissions)
 
 
 def relabelFile(f):
@@ -61,6 +65,8 @@ def calculateEmissionProbability(smoothedCount):
 	for (k,v) in  smoothedCount.items():
 		EmissionProbability[k] = v*1.0 / BIO_count[k[2]]
 
+	return EmissionProbability.values()
+
 
 def buildNgramModel(n):
 	global Ngram
@@ -102,6 +108,8 @@ def calculateTransitionProbability(ngram):
 	for (k,v) in smoothedNgram.items():
 		TransitionProbability[k] = v*1.0/condition_count[k[0:ngram]]
 
+	return TransitionProbability.values()
+
 
 def calculateInitialState(smoothedCount):
 	global InitialState
@@ -114,6 +122,8 @@ def calculateInitialState(smoothedCount):
 
 	for (k,v) in smoothedCount.items():
 		InitialState[k] = v*1.0 / tuple_count[k[0:2]]
+
+	return InitialState.values()
 
 		
 def goodTuring(dictionary, n = 5):
