@@ -21,7 +21,7 @@ def preprocessFile(ngram):
 	transitions = calculateTransitionProbability(ngram)
 	observations = ['test']
 	start_prob = [0.5]
-	print viterbi(observations, states, start_prob, transitions, emissions)
+	print "viter", viterbi(observations, states, start_prob, transitions, emissions)
 
 
 def relabelFile(f):

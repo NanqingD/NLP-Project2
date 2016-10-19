@@ -21,10 +21,10 @@ def viterbi(observations, states, start_prob, trans_prob, em_prob):
 	V = [{}] 
 
 	for state in states:
-    	V[0][state] = start_prob[state] * em_prob[state][observations[0]]
+		V[0][state] = start_prob[state] * em_prob[state][observations[0]]
 
-    for x in range(1, len(obs)):
-    	V.append({})
+	for x in range(1, len(obs)):
+		V.append({})
     	for state in states:
     		(probability, state) = max((V[t - 1][s] * trans_prob[s][state] * em_prob[state][observations[x]], s) for s in states)
         	V[x][state] = probability
@@ -32,13 +32,12 @@ def viterbi(observations, states, start_prob, trans_prob, em_prob):
        	states = []
         for v in V:
         	for x,y in v.items():
-                if v[x] == max(v.values()):
-                    states.append(x)
+        		if v[x] == max(v.values()):
+        			states.append(x)
 
+	highestProb = max(V[-1].values())
 
-    highestProb = max(V[-1].values())
-
-    return states, highestProb
+	return states, highestProb
 	
 	
 
