@@ -17,7 +17,7 @@ def preprocessFile():
 	f = open("aggregated_training.txt", 'r+')
 	w = relabelFile(f)
 	calculateCount()
-	smoothed_word_pos_BIO_Count = word_pos_BIO_count
+	smoothed_word_pos_BIO_Count = goodTuring(word_pos_BIO_count)
 	calculateInitialState(smoothed_word_pos_BIO_Count)
 	calculateEmissionProbability(smoothed_word_pos_BIO_Count)
 	calculateTransitionProbability()
@@ -85,7 +85,7 @@ def calculateInitialState(smoothedCount):
 	global InitialState
 	global InitialStateByWord
 	global BIO_count
-	BIO_count = np.array([0,0,0])
+	BIO_count = np.array([0.0,0.0,0.0])
 	for (k,v) in smoothedCount.items():
 		BIO_count += smoothedCount[k]
 		InitialStateByWord[k] = v*1.0/ sum(v)
@@ -118,13 +118,20 @@ def goodTuring(dictionary, n = 5):
     counts = [0]*(n+2)
     for i in range(0,n+2):
         for (k,v) in  dictionary.items():
-        	if v == i:
-    			counts[i] += 1
-
+        	for j in range(0,3):
+        		if v[j] == i:
+        			counts[i] += 1
+    
     for j in range(0,n+1):
-    	for (k,v) in  d.items():
-    		if v == i:
-    			d[k] = (v+1) * 1.0 * counts[j+1]/counts[j]
+    	for (k,v) in  dictionary.items():
+    		for q in range(0,3):
+        		if v[q] == j:
+					if q == 0:
+						d[k] = d[k] + np.array([(v[q] + 1) * 1.0 * counts[j+1]/counts[j],0,0])
+					if q == 1:
+						d[k] = d[k] + np.array([0,(v[q] + 1) * 1.0 * counts[j+1]/counts[j],0])
+					if q == 2:
+						d[k] = d[k] + np.array([0,0,(v[q] + 1) * 1.0 * counts[j+1]/counts[j]])
 	return d
 
 
@@ -218,22 +225,24 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 					dist = np.random.normal(0.5, 0.5/3, 3)
 			score[i, 0] = InitialState[i] * dist[i]	
 	
-	# print score
+	# print '1', score
 	# raise ValueError('')
 
 	for t in range(1, l):
 		for i in range(0,3):
-			temp = np.array([0,0,0])
+			temp = np.array([1,1,1])
 			if sentence[t] in EmissionProbability:
+				print "Yes"
+				raise ValueError('')
 				for j in range(0,3):
-					print score
-					print 'S', score[j, t-1]
-					print 'T', TransitionProbability[j][i]
-					print 'E', EmissionProbability[sentence[t]][i]
-					raise ValueError('')
-					temp[j] = score[j, t-1] * TransitionProbability[j][i] * EmissionProbability[sentence[t]][i]		
+					# print '3', score
+					# print 'S', score[j, t-1]
+					# print 'T', TransitionProbability[j][i]
+					# print 'E', EmissionProbability[sentence[t]][i]
+					# raise ValueError('')
+					temp[j] = score[j, t-1] * TransitionProbability[j][i] * EmissionProbability[sentence[t]][i]	* 10000	
 			else:
-				dist = np.zeros((1,3))
+				dist = np.ones((1,3))
 				if distribution == 'trivial':
 					dist = np.array([1,1,1])
 				elif distribution == 'uniform':
@@ -243,8 +252,15 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 					while sum(dist > 0) < 3:
 						dist = np.random.normal(0.5, 0.5/3, 3)
 				for j in range(0,3):
-					temp[j] = score[j, t-1] * TransitionProbability[j][i] * dist[i]		
-		
+					# print '2', score
+					print score[j, t-1]
+					print TransitionProbability[j][i]
+					print dist[i]
+					print temp[j]	
+					temp[j] = score[j, t-1] * TransitionProbability[j][i] * dist[i]
+					print temp[j]
+				print 't', temp	
+				raise ValueError('')
 			score[i,t] = max(temp)
 			BPTR[i,t] = temp.argmax()	
 
@@ -255,6 +271,7 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 
 	for i in xrange(l - 2, -1, -1):
 		seq[i] =  BPTR[seq[0]][i]
+	print seq
 	return seq 
 
 def hmmLabeling(sentence, labels):
@@ -267,6 +284,7 @@ def getCurrentPath():
 
 def main():
 	preprocessFile()
+	# print EmissionProbability
 	path = getCurrentPath()
 	label(path)
 
