@@ -8,7 +8,7 @@ word_pos_BIO_count = {} # Dict in the format {(word, key):[B, I, O]}
 EmissionProbability = {}
 BIO_count = {'B':0, 'I':0, 'O':0}
 InitialState = np.array([0,0,0])
-InitialStateByWord = {}
+# InitialStateByWord = {}
 bigram = np.zeros((3, 3))
 TransitionProbability = np.zeros((3, 3))
 
@@ -17,10 +17,13 @@ def preprocessFile():
 	f = open("aggregated_training.txt", 'r+')
 	w = relabelFile(f)
 	calculateCount()
-	smoothed_word_pos_BIO_Count = goodTuring(word_pos_BIO_count)
-	calculateInitialState(smoothed_word_pos_BIO_Count)
-	calculateEmissionProbability(smoothed_word_pos_BIO_Count)
+	global word_pos_BIO_count
+	word_pos_BIO_count = goodTuring(word_pos_BIO_count)
+	calculateInitialState(word_pos_BIO_count)
+	calculateEmissionProbability(word_pos_BIO_count)
+	word_pos_BIO_count = None
 	calculateTransitionProbability()
+	BIO_count = None
 
 
 def relabelFile(f):
@@ -83,12 +86,12 @@ def buildBigramModel():
 
 def calculateInitialState(smoothedCount):
 	global InitialState
-	global InitialStateByWord
+	# global InitialStateByWord
 	global BIO_count
 	BIO_count = np.array([0.0,0.0,0.0])
 	for (k,v) in smoothedCount.items():
 		BIO_count += smoothedCount[k]
-		InitialStateByWord[k] = v*1.0/ sum(v)
+		# InitialStateByWord[k] = v*1.0/ sum(v)
 	
 	InitialState = BIO_count * 1.0 / sum(BIO_count)
 
@@ -150,60 +153,61 @@ def getTestFiles(path, folder_type):
 
 
 def label(path):
+	public = labelTestFiles(path, 'public')
+	private = labelTestFiles(path, 'private')
 	w = open("phrase_labelling_submission.csv",'w+')
 	w.write('Type,Spans\n')
 	w.write('CUE-public,')
-	labels = labelTestFiles(path, 'public')
-	writeToSubmissionFile(w,labels)
+	writeToSubmissionFile(w,public)
 	w.write('\n')
-	labels = labelTestFiles(path, 'private')
 	w.write('CUE-private,')
-	writeToSubmissionFile(w,private_labels)
+	writeToSubmissionFile(w,private)
 	w.write('\n')
 	w.close()
+	public.close()
+	private.close()
 
 
-def writeToSubmissionFile(w, labels):
-	last = None
+def writeToSubmissionFile(w, w2):
+	labels = []
+	for line in w2:
+		labels = line.split()
+	last = 2
 	for i, BIO in enumerate(labels):
-		if BIO == 0:
-			w.write('%s',i+1)
+		if float(BIO) == 0:
+			w.write('%s' %(i+1))
 			last = 0
-		elif BIO == 2 and last != 2:
-			w.write('-%s ',i)
+		elif float(BIO) == 2 and last != 2:
+			w.write('-%s ' %(i))
 			last = 2
-		elif BIO == 1:
+		elif float(BIO) == 1:
 			last = 1
 
 
 def labelTestFiles(path, folder_type):
 	files, subpath = getTestFiles(path, folder_type)
-	labels = []
+	s = open('seq_'+ folder_type +'.txt', 'w+')
 	for doc in files:
 		filepath = subpath + "\\" + doc
 		f = open(filepath, 'r')
-		labels = labels + labelFileBySentence(f,labels)
+		labelFileBySentence(s,f)
 		f.close()
-	return labels
+	s.write('\n')
+	return s
 
 
-def labelFileBySentence(f,labels):
+
+def labelFileBySentence(s, f):
 	sentence = []
 	for line in f:
-		if not isEmptyLine(line):
-			print line
-			
-        	# labels = hmmLabeling(sentence, labels)
-        	# print sentence
-        	# raise ValueError('E')
-        	# sentence = []
+		if not isEmptyLine(line):			
+			word, pos = line.strip().lower().split('\t')
+			sentence.append((word,pos))
 		elif isEmptyLine(line):
-			print 'empty line'
-			# word, pos = line.strip().lower().split('\t')
-			# sentence.append((word,pos))
-			# print (word,pos)
-	raise ValueError('f')
-	return labels
+			labels = hmmLabeling(sentence)
+			for label in labels:
+				s.write('%s ' % (label))
+			sentence = []
 
 
 def viterbi(sentence, distribution = 'trivial'):
@@ -217,8 +221,8 @@ def viterbi(sentence, distribution = 'trivial'):
 	score = np.ones((3,l))
 	BPTR = np.ones((3,l))
 	for i in range(0,3):
-		if sentence[0] in InitialStateByWord:
-			score[i, 0] = InitialStateByWord[sentence[0]][i] * EmissionProbability[sentence[0]][i]
+		if sentence[0] in EmissionProbability:
+			score[i, 0] = InitialState[i] * EmissionProbability[sentence[0]][i]
 		else:
 			dist = np.zeros((1,3))
 			if distribution == 'trivial':
@@ -229,20 +233,13 @@ def viterbi(sentence, distribution = 'trivial'):
 				while sum(dist > 0) < 3:
 					dist = np.random.normal(0.5, 0.5/3, 3)
 			score[i, 0] = InitialState[i] * dist[i]	
-	
-	# print '1', score
-	# raise ValueError('')
+
 	temp = [1,1,1]
 	for t in range(1, l):
 		for i in range(0,3):
 			
 			if sentence[t] in EmissionProbability:
 				for j in range(0,3):
-					# print '3', score
-					# print 'S', score[j, t-1]
-					# print 'T', TransitionProbability[j][i]
-					# print 'E', EmissionProbability[sentence[t]][i]
-					# raise ValueError('')
 					temp[j] = score[j, t-1] * TransitionProbability[j][i] * EmissionProbability[sentence[t]][i]	
 			else:
 				dist = np.ones((1,3))
@@ -262,18 +259,17 @@ def viterbi(sentence, distribution = 'trivial'):
 
 	lastColumn = score[:,-1]
 	maxScoreIndex = lastColumn.argmax()
-	seq = [2] * l
-	seq[-1] = maxScoreIndex
+	seq = [int(maxScoreIndex)]
 
-	for i in xrange(l - 2, -1, -1):
-		seq[i] =  BPTR[seq[0]][i]
-	print seq
-	return seq 
+	for i in xrange(l - 1, 0, -1):
+		next = seq[-1]
+		seq.append(int(BPTR[next][i]))
 
-def hmmLabeling(sentence, labels):
+	return seq[::-1]
+
+def hmmLabeling(sentence):
 	seq = viterbi(sentence)
-	labels = labels + seq
-	return labels
+	return seq
 
 
 def getCurrentPath():
