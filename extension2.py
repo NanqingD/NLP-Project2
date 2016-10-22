@@ -50,7 +50,7 @@ def countCues(f):
 				break
 
 	print "Number of uncertain cue sentences", uncertaintyCueCount
-	print "Number of non-uncertain cue sentences", nonUncertaintycueCount
+	print "Number of non-uncertain sentences", nonUncertaintycueCount
 
 
 def main():
