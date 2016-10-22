@@ -53,7 +53,32 @@ def countCues(f):
 	print "Number of non-uncertain sentences", nonUncertaintycueCount
 
 
+def balanceFile(f):
+
+	nonUncertainCount = 0
+
+	sentences = breakIntoSentences(f)
+
+	for sentence in sentences:
+
+		for i, v in enumerate(sentence):
+
+			#non-uncertain
+			if "cue-" not in v[1]:
+				nonUncertainCount += 1
+				break
+
+		if(nonUncertainCount % 7 == 0):
+			sentences.append(sentence)
+			sentences.append(sentence)
+			sentences.append(sentence)
+			nonUncertainCount = 0
+
+
+
 def main():
+	countCues('aggregated_training.txt')
+	balanceFile('aggregated_training.txt')
 	countCues('aggregated_training.txt')
 
 	
