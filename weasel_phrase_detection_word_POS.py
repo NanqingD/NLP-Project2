@@ -150,12 +150,12 @@ def getTestFiles(path, folder_type):
 
 
 def label(path):
-	private_labels = labelTestFiles(path, 'private')
-	public_labels = labelTestFiles(path, 'public')
-	print public_labels
 	w = open("phrase_labelling_submission.csv",'w+')
 	w.write('Type,Spans\n')
 	w.write('CUE-public,')
+	private_labels = labelTestFiles(path, 'private')
+	public_labels = labelTestFiles(path, 'public')
+	
 	writeToSubmissionFile(w,public_labels)
 	w.write('\n')
 	w.write('CUE-private,')
@@ -184,6 +184,7 @@ def labelTestFiles(path, folder_type):
 		filepath = subpath + "\\" + doc
 		f = open(filepath, 'r')
 		labels = labels + labelFileBySentence(f,labels)
+		f.close()
 	return labels
 
 
@@ -227,13 +228,11 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 	
 	# print '1', score
 	# raise ValueError('')
-
+	temp = [1,1,1]
 	for t in range(1, l):
 		for i in range(0,3):
-			temp = np.array([1,1,1])
+			
 			if sentence[t] in EmissionProbability:
-				print "Yes"
-				raise ValueError('')
 				for j in range(0,3):
 					# print '3', score
 					# print 'S', score[j, t-1]
@@ -253,16 +252,9 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 						dist = np.random.normal(0.5, 0.5/3, 3)
 				for j in range(0,3):
 					# print '2', score
-					print score[j, t-1]
-					print TransitionProbability[j][i]
-					print dist[i]
-					print temp[j]	
 					temp[j] = score[j, t-1] * TransitionProbability[j][i] * dist[i]
-					print temp[j]
-				print 't', temp	
-				raise ValueError('')
 			score[i,t] = max(temp)
-			BPTR[i,t] = temp.argmax()	
+			BPTR[i,t] = temp.index(max(temp))	
 
 	lastColumn = score[:,-1]
 	maxScoreIndex = lastColumn.argmax()
@@ -277,10 +269,13 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 def hmmLabeling(sentence, labels):
 	seq = viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability, EmissionProbability)
 	labels = labels + seq
+	return labels
+
 
 def getCurrentPath():
     path = os.getcwd()
     return path
+
 
 def main():
 	preprocessFile()
