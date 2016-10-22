@@ -51,7 +51,7 @@ def generateFrequencies(tokens, nBefore, nAfter):
 
 			tupTok = tuple(nGramTok)
 
-			if(word[2] != "_" and word[2] not in seenCues):
+			if(word[2] != "_"):# and word[2] not in seenCues):
 				seenCues.append(word[2])
 				if tupTok not in cueFreqs:
 					cueFreqs[tupTok] = 0
@@ -80,10 +80,11 @@ def generateFileList(dir, (start, end)):
 		files.append(fileName)
 	return files
 
-def classifySentence(sentence, probabilities, threshold, nBefore, nAfter):
+def classifySentence(sentence, probabilities, threshold, nBefore, nAfter, numToCheck):
 	maxProb = 0
 	# print probabilities
-	# print sentence
+	# print "SENT: ",sentence
+	probs = []
 	for wordNum in range(nBefore, len(sentence) - nAfter):
 		word = sentence[wordNum]
 		prevWord = sentence[wordNum - 1]
@@ -95,17 +96,34 @@ def classifySentence(sentence, probabilities, threshold, nBefore, nAfter):
 
 		tupTok = tuple(nGramTok)
 
+		# print tupTok
+		# print tupTok in probabilities
+
 		if tupTok in probabilities:
-				maxProb = max(maxProb, probabilities[tupTok])
+			probs.append(probabilities[tupTok])
+
+				# maxProb = max(maxProb, probabilities[tupTok])
 
 	# print maxProb, threshold
 	
-	return (maxProb > threshold)
+	probs.sort()
+	probs.reverse()
 
-def classifyFile(file, probabilities, threshold, nBefore, nAfter):
+	# print probs
+
+	if(len(probs) < numToCheck):
+		sum2 = 0
+	else:
+		sum2 = 0
+		for i in range(numToCheck):
+			sum2 += probs[i]
+
+	return (sum2 > threshold)
+
+def classifyFile(file, probabilities, threshold, nBefore, nAfter, numToCheck):
 	results = []
 	for sentence in file:
-		results.append(classifySentence(sentence, probabilities, threshold, nBefore, nAfter))
+		results.append(classifySentence(sentence, probabilities, threshold, nBefore, nAfter, numToCheck))
 	return results
 
 def validateCrossFile(file):
@@ -156,25 +174,29 @@ def outputPredictions(predictions, outFileName):
 	print >>outFile, s
 	outFile.close()
 
-# for nBefore in range(0, 1):
-# 	for nAfter in range(0, 1):
-# 		for thresTimes in range(1, 51):
-# 			thres = thresTimes * 0.01
+# for numToCheck in range(1, 4):
+# 	for nAfter in range(0, 2):
+# 		for nBefore	in range(0, 2):
+# 			for thresTimes in range(1, 10):
+# 				thres = thresTimes * 0.1
 
-# 			tokens = readFiles(generateFileList("cross_training", (1,950)))
-# 			(freqs, cueFreqs) = generateFrequencies(tokens, nBefore, nAfter)
+# 				tokens = readFiles(generateFileList("cross_training", (1,950)), True)
+# 				(freqs, cueFreqs) = generateFrequencies(tokens, nBefore, nAfter)
 
-# 			probabilities = generateProbabilities(freqs, cueFreqs)
+# 				probabilities = generateProbabilities(freqs, cueFreqs)
 
-# 			fileTokens = readFiles(generateFileList("cross_validation", (951, 1187)))[:-1]
+# 				fileTokens = readFiles(generateFileList("cross_validation", (951, 1187)), True)
 
-# 			predictions = classifyFile(fileTokens, probabilities, thres, nBefore, nAfter)
-# 			golden = validateCrossFile(fileTokens)
+# 				# print fileTokens
 
-# 			print nBefore, nAfter, thres, calculateFScore(predictions, golden)
+# 				predictions = classifyFile(fileTokens, probabilities, thres, nBefore, nAfter, numToCheck)
+# 				golden = validateCrossFile(fileTokens)
+
+# 				print nBefore, nAfter, numToCheck, thres, calculateFScore(predictions, golden)
 
 nBefore = 0
 nAfter = 0
+numToCheck = 3
 thres = 0.2
 
 tokens = readFiles(generateFileList("train", (1,1187)), True)
@@ -182,9 +204,9 @@ tokens = readFiles(generateFileList("train", (1,1187)), True)
 
 probabilities = generateProbabilities(freqs, cueFreqs)
 
-fileTokens = readFiles(generateFileList("test-private", (1, 501)), False)
+fileTokens = readFiles(generateFileList("test-public", (501, 1001)), False)
 
 
-predictions = classifyFile(fileTokens, probabilities, thres, nBefore, nAfter)
+predictions = classifyFile(fileTokens, probabilities, thres, nBefore, nAfter, numToCheck)
 
 outputPredictions(predictions, "newOut.txt")

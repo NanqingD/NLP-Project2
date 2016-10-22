@@ -1,31 +1,30 @@
-trueData = open("crosstruedata.txt", "r").read().split("\n")
+def computeScore():
 
-modelData = open("crossvalidationdata.txt", "r").read().split("\n")
+	trueData = open("crosstruedata.txt", "r").read().split("\n")
+	modelData = open("crossdata.txt", "r").read().split("\n")[:-1]
 
-trueData = map(int, trueData)
-modelData = map(int, modelData)
+	trueData = map(int, trueData)
+	modelData = map(int, modelData)
 
-print trueData
-print modelData
+	precisionCount = 0
 
-precisionCount = 0
+	for pred in modelData:
+		if pred in trueData:
+			precisionCount += 1
 
-for pred in modelData:
-	if pred in trueData:
-		precisionCount += 1
+	precision = precisionCount * 1.0 / len(modelData)
 
-precision = precisionCount * 1.0 / len(modelData)
+	# print "P: " + str(precision)
 
-print precision
+	recallCount = 0
 
-recallCount = 0
+	for pred in trueData:
+		if pred in modelData:
+			recallCount += 1
 
-for pred in trueData:
-	if pred in modelData:
-		recallCount += 1
+	recall = recallCount * 1.0 / len(trueData)
 
-recall = recallCount * 1.0 / len(trueData)
+	# print "R: " + str(recall)
 
-print recall
-
-print precision * recall * 2
+	# print "F: " + str(precision * recall * 2)
+	return (precision * recall * 2)
