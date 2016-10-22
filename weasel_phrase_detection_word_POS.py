@@ -23,6 +23,7 @@ def preprocessFile():
 	calculateEmissionProbability(word_pos_BIO_count)
 	word_pos_BIO_count = None
 	calculateTransitionProbability()
+	tuneTransitionProbability(0.95)
 	BIO_count = None
 
 
@@ -111,6 +112,12 @@ def calculateTransitionProbability():
 		for j in range(0,3):
 			TransitionProbability[i][j] = (bigram[i][j] + 1) *1.0 / (sum(bigram[i]) + 3)
 
+
+def tuneTransitionProbability(alpha):
+	global TransitionProbability
+	TransitionProbability[2][0] = alpha
+	TransitionProbability[2][2] = 1 - alpha
+
 		
 def goodTuring(dictionary, n = 5):
 	# """
@@ -196,7 +203,6 @@ def labelTestFiles(path, folder_type):
 	return s
 
 
-
 def labelFileBySentence(s, f):
 	sentence = []
 	for line in f:
@@ -230,8 +236,7 @@ def viterbi(sentence, distribution = 'trivial'):
 			elif distribution == 'uniform':
 				dist = np.random.uniform(0.0001, 0.9999, 3)
 			else:
-				while sum(dist > 0) < 3:
-					dist = np.random.normal(0.5, 0.5/3, 3)
+				dist = np.absolute(np.random.normal(0.5, 0.5/3, 3))
 			score[i, 0] = InitialState[i] * dist[i]	
 
 	temp = [1,1,1]
@@ -248,9 +253,7 @@ def viterbi(sentence, distribution = 'trivial'):
 				elif distribution == 'uniform':
 					dist = np.random.uniform(0.0001, 0.9999, 3)
 				else:
-					
-					while sum(dist > 0) < 3:
-						dist = np.random.normal(0.5, 0.5/3, 3)
+					dist = np.absolute(np.random.normal(0.5, 0.5/3, 3))
 				for j in range(0,3):
 					# print '2', score
 					temp[j] = score[j, t-1] * TransitionProbability[j][i] * dist[i]
@@ -267,8 +270,9 @@ def viterbi(sentence, distribution = 'trivial'):
 
 	return seq[::-1]
 
+
 def hmmLabeling(sentence):
-	seq = viterbi(sentence)
+	seq = viterbi(sentence, 'trivial')
 	return seq
 
 
