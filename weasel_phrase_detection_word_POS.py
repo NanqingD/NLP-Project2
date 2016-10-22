@@ -11,19 +11,20 @@ InitialState = np.array([0,0,0])
 # InitialStateByWord = {}
 bigram = np.zeros((3, 3))
 TransitionProbability = np.zeros((3, 3))
-
+total = 0
 
 def preprocessFile():
 	f = open("aggregated_training.txt", 'r+')
 	w = relabelFile(f)
 	calculateCount()
 	global word_pos_BIO_count
-	word_pos_BIO_count = goodTuring(word_pos_BIO_count)
+	# word_pos_BIO_count = goodTuring(word_pos_BIO_count)
+	word_pos_BIO_count = addOne(word_pos_BIO_count)
 	calculateInitialState(word_pos_BIO_count)
 	calculateEmissionProbability(word_pos_BIO_count)
 	word_pos_BIO_count = None
 	calculateTransitionProbability()
-	tuneTransitionProbability(0.95)
+	tuneTransitionProbability(0.25)
 	BIO_count = None
 
 
@@ -104,6 +105,7 @@ def calculateEmissionProbability(smoothedCount):
 		EmissionProbability[k] = v*1.0 / BIO_count
 
 
+
 def calculateTransitionProbability():
 	global bigram
 	global TransitionProbability 
@@ -145,6 +147,15 @@ def goodTuring(dictionary, n = 5):
 	return d
 
 
+def addOne(dictionary, n = 5):
+	from copy import deepcopy
+	d = deepcopy(dictionary)
+
+	for (k,v) in  dictionary.items():
+		d[k] = d[k] + np.array([1,1,1])
+
+	return d
+
 def isEmptyLine(line):
     if line.strip() == '':
         return True
@@ -171,16 +182,18 @@ def label(path):
 	writeToSubmissionFile(w,private)
 	w.write('\n')
 	w.close()
-	public.close()
-	private.close()
+	# public.close()
+	# private.close()
 
 
 def writeToSubmissionFile(w, w2):
-	labels = []
-	for line in w2:
-		labels = line.split()
+	# labels = []
+	# for line in w2:
+	# 	labels = line.split()
+
+	# print len(labels)
 	last = 2
-	for i, BIO in enumerate(labels):
+	for i, BIO in enumerate(w2):
 		if float(BIO) == 0:
 			w.write('%s' %(i+1))
 			last = 0
@@ -193,27 +206,38 @@ def writeToSubmissionFile(w, w2):
 
 def labelTestFiles(path, folder_type):
 	files, subpath = getTestFiles(path, folder_type)
-	s = open('seq_'+ folder_type +'.txt', 'w+')
+	# s = open('seq_'+ folder_type +'.txt', 'w+')
+	labels = []
 	for doc in files:
 		filepath = subpath + "\\" + doc
 		f = open(filepath, 'r')
-		labelFileBySentence(s,f)
+		labelFileBySentence(labels,f)
 		f.close()
-	s.write('\n')
-	return s
+		print filepath,'finished'
+
+	print len(labels)
+	return labels
 
 
 def labelFileBySentence(s, f):
+	global total
 	sentence = []
 	for line in f:
+		# print line
 		if not isEmptyLine(line):			
 			word, pos = line.strip().lower().split('\t')
 			sentence.append((word,pos))
 		elif isEmptyLine(line):
 			labels = hmmLabeling(sentence)
-			for label in labels:
-				s.write('%s ' % (label))
+			# for label in labels:
+			# 	s.write('%s ' % (label))
+			s += labels
 			sentence = []
+	if len(sentence) > 0 :
+		labels = hmmLabeling(sentence)
+		# for label in labels:
+		# 	s.write('%s ' % (label))
+		s += labels
 
 
 def viterbi(sentence, distribution = 'trivial'):
@@ -283,7 +307,6 @@ def getCurrentPath():
 
 def main():
 	preprocessFile()
-	# print EmissionProbability
 	path = getCurrentPath()
 	label(path)
 
