@@ -153,11 +153,10 @@ def label(path):
 	w = open("phrase_labelling_submission.csv",'w+')
 	w.write('Type,Spans\n')
 	w.write('CUE-public,')
-	private_labels = labelTestFiles(path, 'private')
-	public_labels = labelTestFiles(path, 'public')
-	
-	writeToSubmissionFile(w,public_labels)
+	labels = labelTestFiles(path, 'public')
+	writeToSubmissionFile(w,labels)
 	w.write('\n')
+	labels = labelTestFiles(path, 'private')
 	w.write('CUE-private,')
 	writeToSubmissionFile(w,private_labels)
 	w.write('\n')
@@ -192,17 +191,22 @@ def labelFileBySentence(f,labels):
 	sentence = []
 	for line in f:
 		if not isEmptyLine(line):
-			word, pos = line.strip().lower().split('\t')
-			sentence.append((word,pos))
-    	else:
-        	labels = hmmLabeling(sentence, labels)
-
-        	sentence = []
+			print line
+			
+        	# labels = hmmLabeling(sentence, labels)
+        	# print sentence
+        	# raise ValueError('E')
+        	# sentence = []
+		elif isEmptyLine(line):
+			print 'empty line'
+			# word, pos = line.strip().lower().split('\t')
+			# sentence.append((word,pos))
+			# print (word,pos)
+	raise ValueError('f')
 	return labels
 
 
-def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability, 
-	EmissionProbability, distribution = 'trivial'):
+def viterbi(sentence, distribution = 'trivial'):
 	"""
 	distribution: trivial, uniform, normal
 	trivial: [1/3, 1/3, 1/3]
@@ -239,7 +243,7 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 					# print 'T', TransitionProbability[j][i]
 					# print 'E', EmissionProbability[sentence[t]][i]
 					# raise ValueError('')
-					temp[j] = score[j, t-1] * TransitionProbability[j][i] * EmissionProbability[sentence[t]][i]	* 10000	
+					temp[j] = score[j, t-1] * TransitionProbability[j][i] * EmissionProbability[sentence[t]][i]	
 			else:
 				dist = np.ones((1,3))
 				if distribution == 'trivial':
@@ -267,7 +271,7 @@ def viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability,
 	return seq 
 
 def hmmLabeling(sentence, labels):
-	seq = viterbi(sentence, InitialState, InitialStateByWord, TransitionProbability, EmissionProbability)
+	seq = viterbi(sentence)
 	labels = labels + seq
 	return labels
 
