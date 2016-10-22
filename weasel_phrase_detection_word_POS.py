@@ -13,6 +13,7 @@ bigram = np.zeros((3, 3))
 TransitionProbability = np.zeros((3, 3))
 total = 0
 
+
 def preprocessFile():
 	f = open("aggregated_training.txt", 'r+')
 	w = relabelFile(f)
@@ -24,7 +25,7 @@ def preprocessFile():
 	calculateEmissionProbability(word_pos_BIO_count)
 	word_pos_BIO_count = None
 	calculateTransitionProbability()
-	tuneTransitionProbability(0.25)
+	tuneTransitionProbability(0.1)
 	BIO_count = None
 
 
@@ -105,7 +106,6 @@ def calculateEmissionProbability(smoothedCount):
 		EmissionProbability[k] = v*1.0 / BIO_count
 
 
-
 def calculateTransitionProbability():
 	global bigram
 	global TransitionProbability 
@@ -155,6 +155,7 @@ def addOne(dictionary, n = 5):
 		d[k] = d[k] + np.array([1,1,1])
 
 	return d
+
 
 def isEmptyLine(line):
     if line.strip() == '':
